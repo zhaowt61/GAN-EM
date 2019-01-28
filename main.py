@@ -1,5 +1,5 @@
 import argparse, os
-from EMGAN import EMGAN
+from GANEM import GANEM
 import torch
 import numpy as np
 
@@ -8,7 +8,7 @@ def parse_args():
     desc = "Pytorch implementation of GAN collections"
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('--gan_type', type=str, default='EMGAN',
+    parser.add_argument('--gan_type', type=str, default='GANEM',
                         help='The type of GAN')
     parser.add_argument('--dataset', type=str, default='mnist', choices=['mnist', 'fashion-mnist', 'celebA'],
                         help='The name of dataset')
@@ -76,7 +76,7 @@ def main():
 
         # declare instance for GAN
 
-    gan = EMGAN(args)
+    gan = GANEM(args)
     gan.train()
     print(" [*] Training finished!")
     # visualize learned generator

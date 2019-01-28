@@ -1,0 +1,10 @@
+*.pyc
+data/
+*.png
+*.pkl
+*.txt
+__pycache__/
+logs/
+results/
+models/
+.idea/

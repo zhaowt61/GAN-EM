@@ -135,7 +135,7 @@ class E_net(nn.Module):
         return x
 
 
-class EMGAN(object):
+class GANEM(object):
     def __init__(self, args):
         # parameters
         self.args = args
@@ -437,7 +437,7 @@ class EMGAN(object):
         self.class_num = 10
 
         self.batch_size = 70
-        torch_dataset = Data.TensorDataset(data_tensor=self.x, target_tensor=self.y)
+        torch_dataset = Data.TensorDataset(self.x, self.y)
         self.train_loader = Data.DataLoader(
             dataset=torch_dataset,  # torch TensorDataset format
             batch_size=self.batch_size,  # mini batch size
