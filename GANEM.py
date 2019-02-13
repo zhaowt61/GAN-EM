@@ -5,10 +5,11 @@ import torch.optim as optim
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import torch.utils.data as Data
-import json
+
+
 class generator(nn.Module):
 
-    def __init__(self,class_num, dataset = 'mnist'):
+    def __init__(self, class_num, dataset='mnist'):
         super(generator, self).__init__()
         if dataset == 'mnist' or 'fashion-mnist':
             self.input_height = 28
@@ -35,23 +36,25 @@ class generator(nn.Module):
 
     def forward(self, input, label):
 
-        x=input
+        x = input
         x = self.fc(x)
         x = x.view(-1, 128, (self.input_height // 4), (self.input_width // 4))
         x = self.deconv(x)
 
         return x
 
+
 class discriminator(nn.Module):
 
-    def __init__(self, class_num,dataset = 'mnist'):
+    def __init__(self, class_num, dataset='mnist'):
         super(discriminator, self).__init__()
         if dataset == 'mnist' or 'fashion-mnist':
             self.input_height = 28
             self.input_width = 28
             self.input_dim = 1 + 10
             self.output_dim = 1
-            self.class_num=class_num
+            self.class_num = class_num
+
         self.conv = nn.Sequential(
 
             nn.Conv2d(1, 64, 4, 2, 1),
@@ -80,16 +83,17 @@ class discriminator(nn.Module):
 
     def forward(self, input):
 
-        x=input
+        x = input
         x = self.conv(x)
         x = x.view(-1, 256 * 3 * 3)
         x = self.fc(x)
 
         return x
 
+
 class E_net(nn.Module):
 
-    def __init__(self, class_num, dataset = 'mnist'):
+    def __init__(self, class_num, dataset='mnist'):
         super(E_net, self).__init__()
         if dataset == 'mnist' or 'fashion-mnist':
             self.input_height = 28
@@ -127,7 +131,7 @@ class E_net(nn.Module):
 
     def forward(self, input):
 
-        x=input
+        x = input
         x = self.conv(x)
         x = x.view(-1, 256 * 3 * 3)
         x = self.fc(x)
@@ -140,7 +144,7 @@ class GANEM(object):
         # parameters
         self.args = args
         self.epoch = args.epoch
-        self.visual_num = 100 # visualization number
+        self.visual_num = 100  # visualization number
         self.batch_size = args.batch_size
         self.save_dir = args.save_dir
         self.result_dir = args.result_dir
@@ -154,8 +158,8 @@ class GANEM(object):
 
         # networks init
         self.E = E_net(class_num=self.class_num, dataset=self.dataset)
-        self.G = generator(class_num=self.class_num,dataset=self.dataset)
-        self.D = discriminator(class_num=self.class_num,dataset=self.dataset)
+        self.G = generator(class_num=self.class_num, dataset=self.dataset)
+        self.D = discriminator(class_num=self.class_num, dataset=self.dataset)
 
         if self.gpu_mode:
             self.G.cuda()
@@ -165,11 +169,10 @@ class GANEM(object):
         else:
             self.BCE_loss = nn.BCELoss()
 
-        #print('---------- Networks architecture -------------')
-        #utils.print_network(self.G)
-        #utils.print_network(self.D)
-        #print('-----------------------------------------------')
-
+        # print('---------- Networks architecture -------------')
+        # utils.print_network(self.G)
+        # utils.print_network(self.D)
+        # print('-----------------------------------------------')
 
         '''
         plt.imshow(torch.squeeze(x[13001].cpu()).numpy(), cmap='gray')
@@ -188,13 +191,13 @@ class GANEM(object):
 
         print('training start!!')
         start_time = time.time()
-        first_time=True
-        self.accuracy_hist=[]
+        first_time = True
+        self.accuracy_hist = []
 
         for epoch in range(self.epoch):
             self.G.train()  # check here!!
             epoch_start_time = time.time()
-            decay=0.98**epoch
+            decay = 0.98 ** epoch
             self.E_optimizer = optim.Adam(self.E.parameters(), lr=decay * 0.3 * self.args.lrD,
                                           betas=(self.args.beta1, self.args.beta2))
             self.G_optimizer = optim.Adam(self.G.parameters(), lr=decay * 3 * self.args.lrG, betas=(self.args.beta1, self.args.beta2))
@@ -202,8 +205,8 @@ class GANEM(object):
             for M_epoch in range(5):
                 for iter, (batch_x, batch_y) in enumerate(self.train_loader):
 
-                    x_=batch_x
-                    z_=torch.rand((self.batch_size, self.z_dim))
+                    x_ = batch_x
+                    z_ = torch.rand((self.batch_size, self.z_dim))
                     x_, z_ = Variable(x_.cuda()), Variable(z_.cuda())
                     G_batch_size = batch_x.size()[0]
                     if G_batch_size < self.batch_size:
@@ -217,8 +220,7 @@ class GANEM(object):
                     self.E.eval()
                     y_real = self.E(image_real)
                     y_real = nn.Softmax()(y_real)
-                    y_real = (y_real).data.cpu().numpy()  #
-
+                    y_real = (y_real).data.cpu().numpy()
 
                     self.D_optimizer.zero_grad()
 
@@ -226,13 +228,13 @@ class GANEM(object):
                     if first_time:
                         y_real = (1 / float(self.class_num)) * np.ones((G_batch_size, self.class_num)) # first_time
 
-                    y_real = np.concatenate((y_real, 2*np.ones((np.shape(y_real)[0], 1))), axis=1)
+                    y_real = np.concatenate((y_real, 2 * np.ones((np.shape(y_real)[0], 1))), axis=1)
 
-                    ones=np.ones((np.shape(y_real)[0],np.shape(y_real)[1]))
-                    ones[:,-1]=0
-                    ones=torch.FloatTensor(ones)
-                    ones=Variable(ones).cuda()
-                    y_real=torch.FloatTensor(y_real).cuda()
+                    ones = np.ones((np.shape(y_real)[0], np.shape(y_real)[1]))
+                    ones[:, -1] = 0
+                    ones = torch.FloatTensor(ones)
+                    ones = Variable(ones).cuda()
+                    y_real = torch.FloatTensor(y_real).cuda()
 
                     D_real_loss = torch.nn.BCEWithLogitsLoss(weight=y_real)(D_real,ones)
 
@@ -241,16 +243,15 @@ class GANEM(object):
                     D_fake = self.D(G_)
                     y_fake_1 = np.tile(np.zeros((self.class_num)), (self.batch_size, 1))
                     y_fake_2 = np.tile(np.ones((1)), (self.batch_size, 1))
-                    y_fake = np.concatenate((y_fake_1,y_fake_2),axis=1)
+                    y_fake = np.concatenate((y_fake_1, y_fake_2), axis=1)
                     y_fake = Variable(torch.FloatTensor(y_fake).cuda())
-                    D_fake_loss=torch.nn.BCEWithLogitsLoss()(D_fake,y_fake)
+                    D_fake_loss = torch.nn.BCEWithLogitsLoss()(D_fake, y_fake)
 
                     D_loss = D_real_loss + D_fake_loss
 
-                    self.train_hist['D_loss'].append(D_loss.data[0])
+                    self.train_hist['D_loss'].append(D_loss.item())
                     D_loss.backward()
                     self.D_optimizer.step()
-
 
                     # update G network:
 
@@ -259,20 +260,17 @@ class GANEM(object):
                     G_ = self.G(G_input, 0)
                     D_fake = self.D(G_)
 
-                    G_y_real=np.concatenate((conditional_label.numpy(),np.tile([0],(self.batch_size,1))),axis=1)
-                    G_y_real=Variable(torch.FloatTensor(G_y_real)).cuda()
-                    G_loss=torch.nn.BCEWithLogitsLoss()(D_fake,G_y_real)
+                    G_y_real = np.concatenate((conditional_label.numpy(), np.tile([0], (self.batch_size, 1))), axis=1)
+                    G_y_real = Variable(torch.FloatTensor(G_y_real)).cuda()
+                    G_loss = torch.nn.BCEWithLogitsLoss()(D_fake, G_y_real)
 
-
-                    self.train_hist['G_loss'].append(G_loss.data[0])
+                    self.train_hist['G_loss'].append(G_loss.item())
                     G_loss.backward()
                     self.G_optimizer.step()
 
                     if ((iter + 1) % 100) == 0:
                         print("Epoch: [%2d] [%4d/%4d] D_loss: %.8f, G_loss: %.8f" %
-                              ((epoch + 1), (iter + 1), len(self.data_X) // self.batch_size, D_loss.data[0], G_loss.data[0]))
-
-
+                              ((epoch + 1), (iter + 1), len(self.data_X) // self.batch_size, D_loss.item(), G_loss.item()))
 
             self.E_training(200)
             first_time = False
@@ -306,7 +304,7 @@ class GANEM(object):
             """ random noise """
 
             G_input, conditional_label = self.gen_cond_label(100)
-            samples = self.G(G_input,0)
+            samples = self.G(G_input, 0)
 
         if self.gpu_mode:
             samples = samples.cpu().data.numpy().transpose(0, 2, 3, 1)
@@ -322,14 +320,13 @@ class GANEM(object):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        #torch.save(self.G.state_dict(), os.path.join(save_dir, self.model_name + '_G.pkl'))
-        #torch.save(self.D.state_dict(), os.path.join(save_dir, self.model_name + '_D.pkl'))
-        #torch.save(self.E.state_dict(), os.path.join(save_dir, self.model_name + '_E.pkl'))
+        # torch.save(self.G.state_dict(), os.path.join(save_dir, self.model_name + '_G.pkl'))
+        # torch.save(self.D.state_dict(), os.path.join(save_dir, self.model_name + '_D.pkl'))
+        # torch.save(self.E.state_dict(), os.path.join(save_dir, self.model_name + '_E.pkl'))
 
         torch.save(self.G, os.path.join(save_dir, self.model_name + '_G.pkl'))
         torch.save(self.D, os.path.join(save_dir, self.model_name + '_D.pkl'))
         torch.save(self.E, os.path.join(save_dir, self.model_name + '_E.pkl'))
-
 
         with open(os.path.join(save_dir, self.model_name + '_history.pkl'), 'wb') as f:
             pickle.dump(self.train_hist, f)
@@ -341,7 +338,7 @@ class GANEM(object):
         self.D.load_state_dict(torch.load(os.path.join(save_dir, self.model_name + '_D.pkl')))
         self.E.load_state_dict(torch.load(os.path.join(save_dir, self.model_name + '_E.pkl')))
 
-    def gen_cond_label(self,points_num):
+    def gen_cond_label(self, points_num):
         num = 0
         for i in range(self.class_num):
             class_i = np.zeros((self.class_num))
@@ -359,7 +356,7 @@ class GANEM(object):
         conditional_label = torch.FloatTensor(conditional_label)
         G_input = (torch.cat([conditional_label, torch.rand(points_num, self.z_dim)], dim=1))
         G_input = Variable(G_input.cuda())  # random ideas
-        return G_input,conditional_label
+        return G_input, conditional_label
 
     def E_training(self, points_num):
         num = 0
@@ -386,31 +383,31 @@ class GANEM(object):
 
             G_input, conditional_label = self.gen_cond_label(points_num)
             self.G.eval()
-            Generated_points = self.G(G_input,0)
+            Generated_points = self.G(G_input, 0)
 
-            conditional_label=conditional_label.cpu().numpy()
+            conditional_label = conditional_label.cpu().numpy()
             Generated_labels = Variable(torch.LongTensor(np.argmax(conditional_label, axis=1)).cuda())
 
             self.E_optimizer.zero_grad()
             pred = (self.E(Generated_points))
-            #if step==0:
-            #    print pred
-                #for i in xrange(2000):
-                #    print np.argmax(pred.data.cpu().numpy(), axis=1)[i],
+            # if step == 0:
+            #    print(pred)
+            #    for i in range(2000):
+            #       print(np.argmax(pred.data.cpu().numpy(), axis=1)[i])
 
-            # print np.shape(Generated_labels)
+            # print()np.shape(Generated_labels))
 
             E_loss = torch.nn.CrossEntropyLoss()(pred, Generated_labels)
             E_loss.backward()
             self.E_optimizer.step()
 
-
-    def entropy(self,y):
-        y=nn.Softmax()(y)
+    def entropy(self, y):
+        y = nn.Softmax()(y)
         y1 = -y * torch.log(y + 1e-6)
         y2 = 1.0 / y1.size()[0] * y1.sum()
 
         return y2
+
     def data_preprocess(self):
         self.data_X, self.data_Y = utils.load_mnist(self.args.dataset)
         # .data_Y.size() (70000L, 10L)
@@ -444,6 +441,7 @@ class GANEM(object):
             shuffle=True,  # random shuffle for training
             num_workers=2,  # subprocesses for loading data
         )
+
     def compute_accuracy(self):
         self.E.eval()
         end = 0
@@ -466,5 +464,5 @@ class GANEM(object):
         accuracy = correct / float(sample_num)
         print ('accuracy:', accuracy)
         self.accuracy_hist.append(accuracy)
-        plt.plot(self.accuracy_hist)
-        plt.savefig("accuracy.png")
+        # plt.plot(self.accuracy_hist)
+        # plt.savefig("accuracy.png")
